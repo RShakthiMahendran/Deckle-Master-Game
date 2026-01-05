@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DECKLE MASTER - Advanced Card Guessing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e6e6e6;
+            padding: 15px;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #0f3460;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin: 0;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+        }
+        .subtitle {
+            color: #a9b7c6;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        /* Info Button Styles */
+        .info-button {
+            position: absolute;
+            top: 20px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: #4ecdc4;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+        }
+        .info-button:hover {
+            background: rgba(78, 205, 196, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .game-info {
+            background: rgba(15, 52, 96, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #0f3460;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+        .stat-box {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            flex: 1;
+            margin: 0 5px;
+        }
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+        .card-selector {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin: 20px 0;
+        }
+        .card-btn {
+            aspect-ratio: 2/3;
+            background: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+        .card-btn:hover {
+            transform: translateY(-3px) rotateX(5deg);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+        .card-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .card-btn.flipped {
+            animation: flipCard 0.6s ease forwards;
+        }
+        @keyframes flipCard {
+            0% { transform: rotateY(0); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0); }
+        }
+        @keyframes correctGuess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes incorrectGuess {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .correct-animation {
+            animation: correctGuess 0.5s ease;
+        }
+        .incorrect-animation {
+            animation: incorrectGuess 0.4s ease;
+        }
+        .heart { color: #ff6b6b; }
+        .diamond { color: #ff6b6b; }
+        .club { color: #2d3436; }
+        .spade { color: #2d3436; }
+        .guesses-container {
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .guess-row {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            border-left: 4px solid #4ecdc4;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .guess-card {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feedback-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            font-size: 0.85em;
+        }
+        .feedback-item {
+            background: rgba(15, 52, 96, 0.5);
+            padding: 6px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .correct { color: #00ff88; }
+        .incorrect { color: #ff6b6b; }
+        .partial { color: #ffd93d; }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        #hintBtn {
+            background: linear-gradient(90deg, #0f3460, #1a1a2e);
+            color: white;
+        }
+        #resetBtn {
+            background: linear-gradient(90deg, #ff6b6b, #ff8e8e);
+            color: white;
+        }
+        #shareBtn {
+            background: linear-gradient(90deg, #00b09b, #96c93d);
+            color: white;
+        }
+        #leaderboardBtn {
+            background: linear-gradient(90deg, #8a2387, #f27121);
+            color: white;
+        }
+        .result {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .win {
+            border: 2px solid #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+        .lose {
+            border: 2px solid #ff6b6b;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+        }
+        
+        /* Leaderboard Styles */
+        .leaderboard {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Info Modal Styles */
+        .info-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+        .info-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 2px solid #0f3460;
+            position: relative;
+        }
+        .close-info {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .info-section {
+            margin-bottom: 20px;
+        }
+        .info-section h3 {
+            color: #4ecdc4;
+            border-bottom: 1px solid #0f3460;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .feedback-example {
+            background: rgba(15, 52, 96, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #0f3460;
+        }
+        .feedback-example .correct {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        .feedback-example .incorrect {
+            background: rgba(255, 107, 107, 0.1);
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        .feedback-example .partial {
+            background: rgba(255, 217, 61, 0.1);
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        
+        .leaderboard-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 2px solid #0f3460;
+            position: relative;
+        }
+        .close-leaderboard {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .leaderboard h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4ecdc4;
+        }
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .leaderboard-table th {
+            background: rgba(15, 52, 96, 0.5);
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #0f3460;
+        }
+        .leaderboard-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .leaderboard-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .leaderboard-table .rank-1 {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .leaderboard-table .rank-2 {
+            color: #c0c0c0;
+            font-weight: bold;
+        }
+        .leaderboard-table .rank-3 {
+            color: #cd7f32;
+            font-weight: bold;
+        }
+        
+        /* Share Modal */
+        .share-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .share-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 2px solid #0f3460;
+            position: relative;
+        }
+        .close-share {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .share-options {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .share-option {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .share-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .copy-result {
+            background: #4ecdc4;
+            margin-top: 15px;
+        }
+        .copy-result.copied {
+            background: #00ff88;
+        }
+        
+        /* Confetti Animation */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            top: -10px;
+            z-index: 9999;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        
+        /* Sound Toggle */
+        .sound-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(15, 52, 96, 0.7);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        @media (max-width: 500px) {
+            .card-selector {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .feedback-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .controls {
+                flex-wrap: wrap;
+            }
+            button {
+                min-width: calc(50% - 5px);
+            }
+            .info-button {
+                position: relative;
+                top: 0;
+                margin: 10px auto;
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sound Toggle Button -->
+    <button class="sound-toggle" id="soundToggle">
+        <i class="fas fa-volume-up"></i>
+    </button>
+    
+    <div class="container">
+        <header>
+            <h1>🎴 DECKLE MASTER</h1>
+            <p class="subtitle">Advanced Card Guessing Game • 5 Categories • Strategic Play</p>
+            <button class="info-button" id="infoButton">
+                <i class="fas fa-info-circle"></i>
+            </button>
+        </header>
+        
+        <div class="game-info">
+            <p>Guess today's mystery card using strategic feedback!</p>
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="attempts">6</div>
+                    <div>Attempts Left</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="streak">0</div>
+                    <div>Day Streak</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="level">1</div>
+                    <div>Level</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="guesses-container" id="guessesContainer">
+            <!-- Guesses will appear here -->
+        </div>
+        
+        <h3>Select Your Card:</h3>
+        <div class="card-selector" id="cardSelector">
+            <!-- Cards will be generated here -->
+        </div>
+        
+        <div class="controls">
+            <button id="hintBtn">
+                <i class="fas fa-lightbulb"></i> Get Hint (Costs 1 Attempt)
+            </button>
+            <button id="resetBtn">
+                <i class="fas fa-redo"></i> Restart Today
+            </button>
+            <button id="shareBtn">
+                <i class="fas fa-share-alt"></i> Share
+            </button>
+            <button id="leaderboardBtn">
+                <i class="fas fa-trophy"></i> Leaderboard
+            </button>
+        </div>
+        
+        <div class="result" id="result">
+            <!-- Win/Lose message -->
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; color: #a9b7c6; font-size: 0.9em;">
+            <p>🎯 <strong>Feedback Categories:</strong> Color • Suit Group • Rank Type • Value • Special Properties</p>
+            <p>🔄 <strong>Restart Button:</strong> Resets today's attempts, keeps streak & level</p>
+        </div>
+    </div>
+    
+    <!-- Info Modal -->
+    <div class="info-modal" id="infoModal">
+        <div class="info-content">
+            <button class="close-info" id="closeInfo">&times;</button>
+            <h2><i class="fas fa-info-circle"></i> HOW TO PLAY DECKLE MASTER</h2>
+            
+            <div class="info-section">
+                <h3>🎯 Game Objective</h3>
+                <p>Guess the <strong>mystery card</strong> in 6 attempts or less. Each day features a new random card that's the same for all players.</p>
+            </div>
+            
+            <div class="info-section">
+                <h3>🔄 How to Play</h3>
+                <ol>
+                    <li>Click any card from the grid to make a guess</li>
+                    <li>Receive feedback in <strong>5 categories</strong></li>
+                    <li>Use the feedback to make your next guess</li>
+                    <li>Win by guessing correctly before running out of attempts</li>
+                </ol>
+            </div>
+            
+            <div class="info-section">
+                <h3>📊 Feedback Categories</h3>
+                <div class="feedback-example">
+                    <p><strong>1. Color:</strong> Is your card the same color? (Red/Black)</p>
+                    <p><span class="correct">✅ Correct Color</span> means same color</p>
+                    <p><span class="incorrect">❌ Wrong Color</span> means different color</p>
+                </div>
+                
+                <div class="feedback-example">
+                    <p><strong>2. Suit Group:</strong> Cards are grouped as:</p>
+                    <p>• Hearts & Diamonds = "Cup Suits"</p>
+                    <p>• Clubs & Spades = "Wand Suits"</p>
+                </div>
+                
+                <div class="feedback-example">
+                    <p><strong>3. Rank Type:</strong> Is your card the same type?</p>
+                    <p>• Aces (A)</p>
+                    <p>• Face Cards (J, Q, K)</p>
+                    <p>• Number Cards (2-10)</p>
+                </div>
+                
+                <div class="feedback-example">
+                    <p><strong>4. Value Comparison:</strong> CLARIFIED - This tells you about the TARGET card!</p>
+                    <p>• <span class="correct">"Target is higher"</span> = Mystery card has HIGHER value than your guess</p>
+                    <p>• <span class="incorrect">"Target is lower"</span> = Mystery card has LOWER value than your guess</p>
+                    <p>• <span class="partial">"Target is slightly higher/lower"</span> = Mystery card is 1 value away</p>
+                    <p><em>Card Values: A=1, J=11, Q=12, K=13, numbers 2-10 = face value</em></p>
+                </div>
+                
+                <div class="feedback-example">
+                    <p><strong>5. Special Properties:</strong> Does your card share special traits?</p>
+                    <p>Properties include: Even/Odd, Prime numbers, Royal cards, Ace Special, Middle Cards (7,8,9), Highest/Lowest values</p>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h3>🎮 Game Features</h3>
+                <p><strong>• Daily Card:</strong> New card every day for all players</p>
+                <p><strong>• Streak System:</strong> Consecutive wins increase your streak</p>
+                <p><strong>• Level Up:</strong> Every 3-day streak increases your level</p>
+                <p><strong>• Hint System:</strong> Get a hint but it costs 1 attempt</p>
+                <p><strong>• Leaderboard:</strong> Compete with other players</p>
+            </div>
+            
+            <div class="info-section">
+                <h3>💡 Pro Tips</h3>
+                <p>1. Start with a card that has many properties (like an Ace or Face card)</p>
+                <p>2. Use the value feedback to narrow down possibilities</p>
+                <p>3. Remember color eliminates half the deck immediately</p>
+                <p>4. Save hints for when you're down to 2-3 possibilities</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #0f3460;">
+                <button id="closeInfoBottom" style="background: #4ecdc4; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                    <i class="fas fa-play"></i> Start Playing!
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Leaderboard Modal -->
+    <div class="leaderboard" id="leaderboardModal">
+        <div class="leaderboard-content">
+            <button class="close-leaderboard" id="closeLeaderboard">&times;</button>
+            <h2><i class="fas fa-trophy"></i> DECKLE MASTER LEADERBOARD</h2>
+            <div id="leaderboardList">
+                <!-- Leaderboard will be loaded here -->
+            </div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button id="resetLeaderboard" style="background: #ff6b6b; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">
+                    <i class="fas fa-trash"></i> Reset Leaderboard
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Share Modal -->
+    <div class="share-modal" id="shareModal">
+        <div class="share-content">
+            <button class="close-share" id="closeShare">&times;</button>
+            <h2><i class="fas fa-share-alt"></i> Share Your Result</h2>
+            <div id="shareText" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin: 15px 0; font-family: monospace; font-size: 1.1em;">
+                <!-- Share text will appear here -->
+            </div>
+            <div class="share-options">
+                <button class="share-option" id="shareTwitter" style="background: #1DA1F2;">
+                    <i class="fab fa-twitter"></i> Twitter
+                </button>
+                <button class="share-option" id="shareWhatsApp" style="background: #25D366;">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </button>
+            </div>
+            <button class="copy-result" id="copyResult">
+                <i class="fas fa-copy"></i> Copy to Clipboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ========== GAME SETUP ==========
+        const suits = ['♥', '♦', '♣', '♠'];
+        const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+        
+        // Advanced card properties database
+        const cardDB = {
+            getColor: (suit) => suit === '♥' || suit === '♦' ? 'Red' : 'Black',
+            getSuitGroup: (suit) => {
+                const groups = {
+                    '♥': 'Cup Suits', '♦': 'Coin Suits', 
+                    '♣': 'Wand Suits', '♠': 'Sword Suits'
+                };
+                return groups[suit];
+            },
+            getRankType: (rank) => {
+                if (rank === 'A') return 'Ace';
+                if (['J','Q','K'].includes(rank)) return 'Face Card';
+                return 'Number Card';
+            },
+            getSpecialProperties: (rank) => {
+                const props = [];
+                const value = getCardValue(rank);
+                if (value === 1) props.push('Lowest');
+                if (value === 13) props.push('Highest');
+                if (value % 2 === 0) props.push('Even');
+                if ([2,3,5,7,11,13].includes(value)) props.push('Prime');
+                if (['J','Q','K'].includes(rank)) props.push('Royal');
+                if (rank === 'A') props.push('Ace Special');
+                if (['7','8','9'].includes(rank)) props.push('Middle Card');
+                return props.length > 0 ? props : ['Standard'];
+            }
+        };
+        
+        // ========== GAME STATE ==========
+        let dailyCard = null;
+        let guesses = [];
+        let attempts = 6;
+        let gameActive = true;
+        
+        // ========== FIXED DATE & STREAK MANAGEMENT ==========
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const yesterdayDate = new Date(now);
+        yesterdayDate.setDate(now.getDate() - 1);
+        const yesterday = yesterdayDate.toISOString().split('T')[0];
+        
+        // Load player stats
+        let playerStats = JSON.parse(localStorage.getItem('deckle_player_stats')) || {
+            streak: 0,
+            level: 1,
+            lastWinDate: null,
+            lastPlayDate: null,
+            totalWins: 0,
+            totalGames: 0,
+            bestStreak: 0
+        };
+        
+        // ========== SOUND MANAGER ==========
+        let soundEnabled = localStorage.getItem('deckle_sound') !== 'false';
+        const soundToggle = document.getElementById('soundToggle');
+        
+        function initSound() {
+            soundToggle.innerHTML = soundEnabled ? 
+                '<i class="fas fa-volume-up"></i>' : 
+                '<i class="fas fa-volume-mute"></i>';
+            
+            soundToggle.onclick = () => {
+                soundEnabled = !soundEnabled;
+                localStorage.setItem('deckle_sound', soundEnabled);
+                soundToggle.innerHTML = soundEnabled ? 
+                    '<i class="fas fa-volume-up"></i>' : 
+                    '<i class="fas fa-volume-mute"></i>';
+                if (soundEnabled) playSound('click');
+            };
+        }
+        
+        function playSound(type) {
+            if (!soundEnabled) return;
+            
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                let frequency = 440;
+                let duration = 0.1;
+                
+                switch(type) {
+                    case 'click':
+                        frequency = 523.25; // C5
+                        duration = 0.05;
+                        break;
+                    case 'correct':
+                        frequency = 659.25; // E5
+                        duration = 0.2;
+                        break;
+                    case 'incorrect':
+                        frequency = 392.00; // G4
+                        duration = 0.15;
+                        break;
+                    case 'win':
+                        frequency = 880; // A5
+                        duration = 0.3;
+                        break;
+                    case 'lose':
+                        frequency = 293.66; // D4
+                        duration = 0.25;
+                        break;
+                    case 'hint':
+                        frequency = 698.46; // F5
+                        duration = 0.1;
+                        break;
+                }
+                
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (e) {
+                console.log("Audio not supported");
+            }
+        }
+        
+        // ========== ANIMATION FUNCTIONS ==========
+        function createConfetti() {
+            if (!soundEnabled) return;
+            
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffd93d', '#6bcf7f', '#9d65c9'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 10 + 5 + 'px';
+                confetti.style.animation = `confetti-fall ${Math.random() * 3 + 2}s linear forwards`;
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+        
+        // ========== LEADERBOARD SYSTEM ==========
+        function updateLeaderboard() {
+            let leaderboard = JSON.parse(localStorage.getItem('deckle_leaderboard')) || [];
+            
+            // Check if player already exists
+            const playerIndex = leaderboard.findIndex(p => p.id === 'current_player');
+            
+            const playerData = {
+                id: 'current_player',
+                name: 'You',
+                streak: playerStats.streak,
+                level: playerStats.level,
+                totalWins: playerStats.totalWins,
+                bestStreak: Math.max(playerStats.streak, playerStats.bestStreak),
+                lastUpdated: today
+            };
+            
+            if (playerIndex === -1) {
+                leaderboard.push(playerData);
+            } else {
+                // Update existing player
+                leaderboard[playerIndex] = {
+                    ...leaderboard[playerIndex],
+                    streak: playerStats.streak,
+                    level: playerStats.level,
+                    totalWins: playerStats.totalWins,
+                    bestStreak: Math.max(playerStats.streak, playerStats.bestStreak, leaderboard[playerIndex].bestStreak || 0),
+                    lastUpdated: today
+                };
+            }
+            
+            // Sort by streak (descending), then level, then wins
+            leaderboard.sort((a, b) => {
+                if (b.streak !== a.streak) return b.streak - a.streak;
+                if (b.level !== a.level) return b.level - a.level;
+                return b.totalWins - a.totalWins;
+            });
+            
+            // Keep top 10
+            leaderboard = leaderboard.slice(0, 10);
+            
+            localStorage.setItem('deckle_leaderboard', JSON.stringify(leaderboard));
+            displayLeaderboard();
+        }
+        
+        function displayLeaderboard() {
+            const leaderboard = JSON.parse(localStorage.getItem('deckle_leaderboard')) || [];
+            const leaderboardList = document.getElementById('leaderboardList');
+            
+            if (leaderboard.length === 0) {
+                leaderboardList.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #a9b7c6;">
+                        <i class="fas fa-trophy" style="font-size: 3em; opacity: 0.5; margin-bottom: 15px;"></i>
+                        <p>No leaderboard data yet. Play more games!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Streak</th>
+                            <th>Level</th>
+                            <th>Wins</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            leaderboard.forEach((player, index) => {
+                const rankClass = `rank-${index + 1}`;
+                html += `
+                    <tr class="${rankClass}">
+                        <td>
+                            ${index + 1 === 1 ? '🥇' : 
+                              index + 1 === 2 ? '🥈' : 
+                              index + 1 === 3 ? '🥉' : 
+                              index + 1}
+                        </td>
+                        <td>${player.name}</td>
+                        <td>${player.streak} days</td>
+                        <td>${player.level}</td>
+                        <td>${player.totalWins || 0}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `</tbody></table>`;
+            leaderboardList.innerHTML = html;
+        }
+        
+        // ========== SHARE SYSTEM ==========
+        function openShareModal() {
+            const shareModal = document.getElementById('shareModal');
+            const shareText = document.getElementById('shareText');
+            const copyBtn = document.getElementById('copyResult');
+            
+            const emojiGrid = generateEmojiGrid();
+            const shareString = `🎴 DECKLE MASTER #${getDayNumber()}\n${7-attempts}/6\n${emojiGrid}\n\nPlay at: ${window.location.href}`;
+            
+            shareText.textContent = shareString;
+            shareModal.style.display = 'flex';
+            
+            copyBtn.classList.remove('copied');
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy to Clipboard';
+            
+            playSound('click');
+        }
+        
+        function generateEmojiGrid() {
+            return guesses.map(g => {
+                if (g.feedback.exactMatch) return '🎯';
+                if (g.feedback.colorMatch && g.feedback.suitGroupMatch) return '🟡';
+                if (g.feedback.colorMatch) return '🔴';
+                return '⚫';
+            }).join('');
+        }
+        
+        // ========== INITIALIZE ==========
+        function initGame() {
+            // Generate today's card
+            const seed = Array.from(today).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            dailyCard = {
+                suit: suits[seed % 4],
+                rank: ranks[seed % 13]
+            };
+            
+            console.log("🎴 Today's Card:", dailyCard);
+            
+            // Update UI
+            document.getElementById('attempts').textContent = attempts;
+            document.getElementById('streak').textContent = playerStats.streak;
+            document.getElementById('level').textContent = playerStats.level;
+            
+            // Initialize systems
+            initSound();
+            updateLeaderboard();
+            
+            // Generate card selector
+            generateCardGrid();
+            
+            // Load saved game
+            loadGameState();
+            
+            // Setup event listeners
+            setupEventListeners();
+        }
+        
+        function setupEventListeners() {
+            // Info button
+            document.getElementById('infoButton').onclick = () => {
+                document.getElementById('infoModal').style.display = 'flex';
+                playSound('click');
+            };
+            
+            // Close info modal buttons
+            document.getElementById('closeInfo').onclick = () => {
+                document.getElementById('infoModal').style.display = 'none';
+                playSound('click');
+            };
+            
+            document.getElementById('closeInfoBottom').onclick = () => {
+                document.getElementById('infoModal').style.display = 'none';
+                playSound('click');
+            };
+            
+            // Share button
+            document.getElementById('shareBtn').onclick = openShareModal;
+            
+            // Leaderboard button
+            document.getElementById('leaderboardBtn').onclick = () => {
+                displayLeaderboard();
+                document.getElementById('leaderboardModal').style.display = 'flex';
+                playSound('click');
+            };
+            
+            // Close leaderboard
+            document.getElementById('closeLeaderboard').onclick = () => {
+                document.getElementById('leaderboardModal').style.display = 'none';
+                playSound('click');
+            };
+            
+            // Close share modal
+            document.getElementById('closeShare').onclick = () => {
+                document.getElementById('shareModal').style.display = 'none';
+                playSound('click');
+            };
+            
+            // Copy result button
+            document.getElementById('copyResult').onclick = () => {
+                const shareText = document.getElementById('shareText').textContent;
+                navigator.clipboard.writeText(shareText).then(() => {
+                    const copyBtn = document.getElementById('copyResult');
+                    copyBtn.classList.add('copied');
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    playSound('correct');
+                });
+            };
+            
+            // Share to Twitter
+            document.getElementById('shareTwitter').onclick = () => {
+                const text = encodeURIComponent(document.getElementById('shareText').textContent);
+                window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+                playSound('click');
+            };
+            
+            // Share to WhatsApp
+            document.getElementById('shareWhatsApp').onclick = () => {
+                const text = encodeURIComponent(document.getElementById('shareText').textContent);
+                window.open(`https://wa.me/?text=${text}`, '_blank');
+                playSound('click');
+            };
+            
+            // Reset leaderboard
+            document.getElementById('resetLeaderboard').onclick = () => {
+                if (confirm("Are you sure you want to reset the leaderboard? This cannot be undone.")) {
+                    localStorage.removeItem('deckle_leaderboard');
+                    displayLeaderboard();
+                    playSound('click');
+                }
+            };
+            
+            // Close modals when clicking outside
+            window.onclick = (event) => {
+                if (event.target.id === 'leaderboardModal') {
+                    document.getElementById('leaderboardModal').style.display = 'none';
+                }
+                if (event.target.id === 'shareModal') {
+                    document.getElementById('shareModal').style.display = 'none';
+                }
+                if (event.target.id === 'infoModal') {
+                    document.getElementById('infoModal').style.display = 'none';
+                }
+            };
+        }
+        
+        // ========== CARD GRID ==========
+        function generateCardGrid() {
+            const selector = document.getElementById('cardSelector');
+            selector.innerHTML = '';
+            
+            suits.forEach(suit => {
+                const suitHeader = document.createElement('div');
+                suitHeader.style.gridColumn = '1 / -1';
+                suitHeader.style.color = suit === '♥' || suit === '♦' ? '#ff6b6b' : '#2d3436';
+                suitHeader.style.fontWeight = 'bold';
+                suitHeader.style.marginTop = '10px';
+                suitHeader.textContent = getSuitName(suit) + ' Suit:';
+                selector.appendChild(suitHeader);
+                
+                ranks.forEach(rank => {
+                    const cardBtn = document.createElement('button');
+                    cardBtn.className = `card-btn ${getSuitClass(suit)}`;
+                    cardBtn.innerHTML = `<div>${rank}</div><div>${suit}</div>`;
+                    
+                    const alreadyGuessed = guesses.some(g => g.rank === rank && g.suit === suit);
+                    
+                    cardBtn.onclick = () => {
+                        playSound('click');
+                        cardBtn.classList.add('flipped');
+                        setTimeout(() => {
+                            cardBtn.classList.remove('flipped');
+                            makeGuess(rank, suit);
+                        }, 300);
+                    };
+                    
+                    cardBtn.disabled = !gameActive || attempts <= 0 || alreadyGuessed;
+                    
+                    if (alreadyGuessed) {
+                        cardBtn.style.opacity = '0.5';
+                        cardBtn.style.textDecoration = 'line-through';
+                    }
+                    
+                    selector.appendChild(cardBtn);
+                });
+            });
+        }
+        
+        // ========== GAME LOGIC ==========
+        function makeGuess(rank, suit) {
+            if (!gameActive || attempts <= 0) return;
+            
+            if (guesses.some(g => g.rank === rank && g.suit === suit)) {
+                alert("You already guessed this card!");
+                return;
+            }
+            
+            const feedback = calculateAdvancedFeedback(rank, suit);
+            
+            guesses.push({
+                rank, suit, feedback,
+                guessNumber: 7 - attempts
+            });
+            
+            attempts--;
+            document.getElementById('attempts').textContent = attempts;
+            
+            // Play feedback sound
+            if (feedback.exactMatch) {
+                playSound('correct');
+            } else if (feedback.colorMatch || feedback.suitGroupMatch || feedback.rankTypeMatch) {
+                playSound('hint');
+            } else {
+                playSound('incorrect');
+            }
+            
+            // Add animation
+            const guessRow = displayGuess(rank, suit, feedback);
+            if (feedback.exactMatch) {
+                guessRow.classList.add('correct-animation');
+            } else {
+                guessRow.classList.add('incorrect-animation');
+            }
+            
+            // Update stats
+            playerStats.totalGames = (playerStats.totalGames || 0) + 1;
+            
+            if (feedback.exactMatch) {
+                endGame(true, rank, suit);
+            } else if (attempts <= 0) {
+                endGame(false, rank, suit);
+            }
+            
+            saveGameState();
+            generateCardGrid();
+        }
+        
+        function calculateAdvancedFeedback(guessRank, guessSuit) {
+            const target = dailyCard;
+            
+            const colorMatch = cardDB.getColor(guessSuit) === cardDB.getColor(target.suit);
+            const suitGroupMatch = cardDB.getSuitGroup(guessSuit) === cardDB.getSuitGroup(target.suit);
+            const rankTypeMatch = cardDB.getRankType(guessRank) === cardDB.getRankType(target.rank);
+            
+            const guessValue = getCardValue(guessRank);
+            const targetValue = getCardValue(target.rank);
+            
+            let valueComparison = '';
+            if (guessValue === targetValue) {
+                valueComparison = 'Correct value!';
+            } else {
+                const difference = Math.abs(guessValue - targetValue);
+                // FIXED: Now clearly indicates about the TARGET card
+                if (guessValue > targetValue) {
+                    // Your guess is HIGHER than target, so target is LOWER
+                    valueComparison = difference === 1 ? 'Target is slightly lower' : 'Target is lower';
+                } else {
+                    // Your guess is LOWER than target, so target is HIGHER
+                    valueComparison = difference === 1 ? 'Target is slightly higher' : 'Target is higher';
+                }
+            }
+            
+            const guessProps = cardDB.getSpecialProperties(guessRank);
+            const targetProps = cardDB.getSpecialProperties(target.rank);
+            const matchingProps = guessProps.filter(prop => targetProps.includes(prop));
+            const specialMatch = matchingProps.length;
+            
+            return {
+                colorMatch,
+                suitGroupMatch,
+                rankTypeMatch,
+                valueComparison,
+                specialMatch,
+                totalSpecialProps: targetProps.length,
+                exactMatch: (guessRank === target.rank && guessSuit === target.suit),
+                guessProps,
+                targetProps
+            };
+        }
+        
+        // ========== DISPLAY ==========
+        function displayGuess(rank, suit, feedback) {
+            const container = document.getElementById('guessesContainer');
+            
+            const guessDiv = document.createElement('div');
+            guessDiv.className = 'guess-row';
+            
+            const guessHeader = document.createElement('div');
+            guessHeader.className = 'guess-card';
+            guessHeader.innerHTML = `
+                <span style="font-size: 1.8em;">${rank}${suit}</span>
+                <span style="color: #a9b7c6; font-size: 0.9em;">Guess #${7-attempts-1}</span>
+            `;
+            
+            const feedbackGrid = document.createElement('div');
+            feedbackGrid.className = 'feedback-grid';
+            
+            feedbackGrid.innerHTML = `
+                <div class="feedback-item ${feedback.colorMatch ? 'correct' : 'incorrect'}">
+                    Color: ${cardDB.getColor(suit)}<br>
+                    ${feedback.colorMatch ? '✅' : '❌'}
+                </div>
+                
+                <div class="feedback-item ${feedback.suitGroupMatch ? 'correct' : 'incorrect'}">
+                    Suit Group: ${cardDB.getSuitGroup(suit)}<br>
+                    ${feedback.suitGroupMatch ? '✅' : '❌'}
+                </div>
+                
+                <div class="feedback-item ${feedback.rankTypeMatch ? 'correct' : 'incorrect'}">
+                    Type: ${cardDB.getRankType(rank)}<br>
+                    ${feedback.rankTypeMatch ? '✅' : '❌'}
+                </div>
+                
+                <div class="feedback-item ${feedback.valueComparison === 'Correct value!' ? 'correct' : 
+                                          feedback.valueComparison.includes('slightly') ? 'partial' : 'incorrect'}">
+                    Value: ${feedback.valueComparison}
+                </div>
+                
+                <div class="feedback-item ${feedback.specialMatch > 0 ? 'partial' : 'incorrect'}">
+                    Special Props:<br>
+                    ${feedback.specialMatch}/${feedback.totalSpecialProps} match
+                </div>
+                
+                <div class="feedback-item">
+                    Properties:<br>
+                    ${feedback.guessProps.join(', ')}
+                </div>
+            `;
+            
+            guessDiv.appendChild(guessHeader);
+            guessDiv.appendChild(feedbackGrid);
+            container.appendChild(guessDiv);
+            
+            container.scrollTop = container.scrollHeight;
+            return guessDiv;
+        }
+        
+        // ========== END GAME ==========
+        function endGame(won, rank, suit) {
+            gameActive = false;
+            const resultDiv = document.getElementById('result');
+            
+            playerStats.lastPlayDate = today;
+            
+            if (won) {
+                playerStats.totalWins = (playerStats.totalWins || 0) + 1;
+                
+                if (playerStats.lastWinDate === today) {
+                    resultDiv.className = 'result win';
+                    resultDiv.innerHTML = `
+                        <h2 style="color: #00ff88;">🎉 YOU WIN AGAIN! 🎉</h2>
+                        <p>You already won today! The card was: <strong>${rank}${suit}</strong></p>
+                        <p>Attempts used: ${7-attempts}</p>
+                        <p>Current streak: ${playerStats.streak} days</p>
+                        <p>Current level: ${playerStats.level}</p>
+                        <p>Total wins: ${playerStats.totalWins}</p>
+                        <button onclick="openShareModal()" style="background: #00b09b; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-top: 10px; cursor: pointer;">
+                            <i class="fas fa-share-alt"></i> Share Victory
+                        </button>
+                    `;
+                } else {
+                    const isConsecutiveWin = playerStats.lastWinDate === yesterday;
+                    
+                    if (isConsecutiveWin) {
+                        playerStats.streak++;
+                    } else if (playerStats.lastWinDate === null) {
+                        playerStats.streak = 1;
+                    } else {
+                        playerStats.streak = 1;
+                    }
+                    
+                    playerStats.lastWinDate = today;
+                    
+                    if (playerStats.streak % 3 === 0) {
+                        playerStats.level++;
+                    }
+                    
+                    playerStats.bestStreak = Math.max(playerStats.streak, playerStats.bestStreak || 0);
+                    
+                    localStorage.setItem('deckle_player_stats', JSON.stringify(playerStats));
+                    
+                    // Confetti and sounds
+                    createConfetti();
+                    playSound('win');
+                    
+                    document.getElementById('streak').textContent = playerStats.streak;
+                    document.getElementById('level').textContent = playerStats.level;
+                    
+                    resultDiv.className = 'result win';
+                    resultDiv.innerHTML = `
+                        <h2 style="color: #00ff88;">🎉 YOU WIN! 🎉</h2>
+                        <p>You guessed the card: <strong style="font-size: 1.5em;">${rank}${suit}</strong></p>
+                        <p>Attempts used: ${7-attempts}</p>
+                        <p>Current streak: ${playerStats.streak} days</p>
+                        <p>Current level: ${playerStats.level}</p>
+                        <p>Total wins: ${playerStats.totalWins}</p>
+                        ${playerStats.streak % 3 === 0 ? `<p style="color: #ffd93d; margin-top: 10px; font-size: 1.2em;">⭐ Level Up! You're now Level ${playerStats.level}!</p>` : ''}
+                        <div style="margin-top: 15px;">
+                            <button onclick="openShareModal()" style="background: #00b09b; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px; cursor: pointer;">
+                                <i class="fas fa-share-alt"></i> Share Result
+                            </button>
+                            <button onclick="document.getElementById('leaderboardModal').style.display='flex'" style="background: #8a2387; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px; cursor: pointer;">
+                                <i class="fas fa-trophy"></i> View Leaderboard
+                            </button>
+                        </div>
+                        <p style="margin-top: 15px; font-size: 0.9em; color: #a9b7c6;">
+                            Share your victory!<br>
+                            🎴 DECKLE #${getDayNumber()} ${7-attempts}/6
+                        </p>
+                    `;
+                }
+            } else {
+                if (playerStats.lastWinDate !== today) {
+                    playerStats.streak = 0;
+                    localStorage.setItem('deckle_player_stats', JSON.stringify(playerStats));
+                }
+                
+                playSound('lose');
+                
+                resultDiv.className = 'result lose';
+                resultDiv.innerHTML = `
+                    <h2 style="color: #ff6b6b;">💔 GAME OVER</h2>
+                    <p>The card was: <strong style="font-size: 1.5em;">${dailyCard.rank}${dailyCard.suit}</strong></p>
+                    <p>Properties: ${cardDB.getSpecialProperties(dailyCard.rank).join(', ')}</p>
+                    <p>Come back tomorrow for a new card!</p>
+                    <button onclick="openShareModal()" style="background: #ff6b6b; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-top: 10px; cursor: pointer;">
+                        <i class="fas fa-share-alt"></i> Share Result
+                    </button>
+                `;
+            }
+            
+            resultDiv.style.display = 'block';
+            updateLeaderboard();
+            
+            document.querySelectorAll('.card-btn').forEach(btn => {
+                btn.disabled = true;
+            });
+        }
+        
+        // ========== HELPER FUNCTIONS ==========
+        function getCardValue(rank) {
+            const values = {A:1, J:11, Q:12, K:13};
+            return values[rank] || parseInt(rank);
+        }
+        
+        function getSuitName(suit) {
+            const names = {'♥':'Hearts', '♦':'Diamonds', '♣':'Clubs', '♠':'Spades'};
+            return names[suit];
+        }
+        
+        function getSuitClass(suit) {
+            return suit === '♥' || suit === '♦' ? 'heart' : 'club';
+        }
+        
+        function getDayNumber() {
+            const start = new Date('2024-01-01');
+            const today = new Date();
+            return Math.floor((today - start) / (1000 * 60 * 60 * 24));
+        }
+        
+        // ========== GAME STATE SAVING ==========
+        function saveGameState() {
+            const state = {
+                guesses: guesses,
+                attempts: attempts,
+                gameActive: gameActive,
+                saveDate: today
+            };
+            localStorage.setItem('deckle_game_state', JSON.stringify(state));
+        }
+        
+        function loadGameState() {
+            const saved = localStorage.getItem('deckle_game_state');
+            if (saved) {
+                const state = JSON.parse(saved);
+                
+                if (state.saveDate === today) {
+                    guesses = state.guesses;
+                    attempts = state.attempts;
+                    gameActive = state.gameActive;
+                    
+                    document.getElementById('attempts').textContent = attempts;
+                    
+                    guesses.forEach(g => {
+                        displayGuess(g.rank, g.suit, g.feedback);
+                    });
+                    
+                    if (!gameActive || attempts <= 0) {
+                        endGame(guesses.some(g => g.feedback.exactMatch));
+                    }
+                }
+            }
+        }
+        
+        // ========== BUTTON HANDLERS ==========
+        document.getElementById('hintBtn').onclick = function() {
+            if (attempts > 1) {
+                attempts--;
+                document.getElementById('attempts').textContent = attempts;
+                
+                const hints = [
+                    `Color: ${cardDB.getColor(dailyCard.suit)}`,
+                    `Suit Group: ${cardDB.getSuitGroup(dailyCard.suit)}`,
+                    `Rank Type: ${cardDB.getRankType(dailyCard.rank)}`,
+                    `Special Property: ${cardDB.getSpecialProperties(dailyCard.rank)[0]}`,
+                    `Value Range: ${getCardValue(dailyCard.rank) <= 6 ? 'Low' : 'High'}`
+                ];
+                
+                alert(`💡 Hint: ${hints[Math.floor(Math.random() * hints.length)]}`);
+                playSound('hint');
+                saveGameState();
+            } else {
+                alert("Not enough attempts for a hint!");
+            }
+        };
+        
+        document.getElementById('resetBtn').onclick = function() {
+            if (confirm("Restart today's game? Your current progress for today will be lost, but streak and level remain.")) {
+                guesses = [];
+                attempts = 6;
+                gameActive = true;
+                
+                localStorage.removeItem('deckle_game_state');
+                
+                document.getElementById('attempts').textContent = attempts;
+                document.getElementById('guessesContainer').innerHTML = '';
+                document.getElementById('result').style.display = 'none';
+                
+                generateCardGrid();
+                playSound('click');
+            }
+        };
+        
+        // ========== START GAME ==========
+        initGame();
+    </script>
+</body>
+</html>
