@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://rshakthimahendran.github.io/Deckle-Master-Game/sitemap.xml
